@@ -1,0 +1,11 @@
+SECRET_KEY=bolehapaaja
+PATH_FILE=http://localhost:5000/uploads/
+SERVER_KEY=SB-Mid-server-W1QDk2WXWJQH_ID6AuV9CMSK
+CLIENT_KEY=SB-Mid-client-cs4wafYdCgg8Esyq
+EMAIL_SYSTEM=email_here...
+PASSWORD_SYSTEM=password_app...
+DB_HOST=ec2-44-205-41-76.compute-1.amazonaws.com
+DB_NAME=d5qeehdg4bru63
+DB_PASSWORD=499222a1c9e8b2d281e9f6a5c4aa00192efd6ce1f01f3130c435d49f41a28354
+DB_PORT=5432
+DB_USER=ebxgqqzgkbbcwt
