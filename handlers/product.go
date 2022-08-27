@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	productdto "waysbuck/dto/product"
 	dto "waysbuck/dto/result"
@@ -12,14 +13,19 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
+
+	"context"
+
+	"github.com/cloudinary/cloudinary-go/v2"
+	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 )
 
 type handlerProduct struct {
 	ProductRepository repositories.ProductRepository
 }
 
-// path alamat untuk akses halaman gambar
-var path_file = "http://localhost:5000/uploads/"
+// // path alamat untuk akses halaman gambar
+// var path_file = "http://localhost:5000/uploads/"
 
 func HandlerProduct(ProductRepository repositories.ProductRepository) *handlerProduct {
 	return &handlerProduct{ProductRepository}
@@ -35,9 +41,14 @@ func (h *handlerProduct) FindProducts(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(response)
 	}
 
-	// looping untuk melakukan tampilan gambar pada postman
+	// // looping untuk melakukan tampilan gambar pada postman
+	// for i, p := range products {
+	// 	products[i].Image = path_file + p.Image
+	// }
+
 	for i, p := range products {
-		products[i].Image = path_file + p.Image
+		imagePath := os.Getenv("PATH_FILE") + p.Image
+		products[i].Image = imagePath
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -59,8 +70,8 @@ func (h *handlerProduct) GetProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// menampilkan gambar
-	product.Image = path_file + product.Image
+	// // menampilkan gambar
+	// product.Image = path_file + product.Image
 
 	w.WriteHeader(http.StatusOK)
 	response := dto.SuccessGetProduct{Status: "Success", Data: product}
@@ -70,14 +81,18 @@ func (h *handlerProduct) GetProduct(w http.ResponseWriter, r *http.Request) {
 func (h *handlerProduct) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	// dataContex := r.Context().Value("dataFile")
+	// filename := dataContex.(string)
+
+	// get image filepath
 	dataContex := r.Context().Value("dataFile")
-	filename := dataContex.(string)
+	filepath := dataContex.(string)
 
 	price, _ := strconv.Atoi(r.FormValue("price"))
 	request := productdto.CreateProduct{
 		Title: r.FormValue("title"),
 		Price: price,
-		Image: filename,
+		Image: filepath,
 	}
 
 	// validate := validator.New()
@@ -89,10 +104,25 @@ func (h *handlerProduct) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	// 	return
 	// }
 
+	var ctx = context.Background()
+	var CLOUD_NAME = os.Getenv("CLOUD_NAME")
+	var API_KEY = os.Getenv("API_KEY")
+	var API_SECRET = os.Getenv("API_SECRET")
+
+	// Add your Cloudinary credentials ...
+	cld, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
+
+	// Upload file to Cloudinary ...
+	resp, err := cld.Upload.Upload(ctx, filepath, uploader.UploadParams{Folder: "dumbmerch"})
+
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
 	product := models.Product{
 		Title: request.Title,
 		Price: request.Price,
-		Image: filename,
+		Image: resp.SecureURL, // Modify store file URL to database from resp.SecureURL ...
 	}
 
 	fmt.Println(product)

@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 	"strconv"
 	productdto "waysbuck/dto/product"
 	dto "waysbuck/dto/result"
@@ -32,9 +33,14 @@ func (h *handlerToping) FindTopings(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(response)
 	}
 
-	// looping untuk melakukan tampilan gambar pada postman
+	// // looping untuk melakukan tampilan gambar pada postman
+	// for i, p := range topings {
+	// 	topings[i].Image = path_file + p.Image
+	// }
+
 	for i, p := range topings {
-		topings[i].Image = path_file + p.Image
+		imagePath := os.Getenv("PATH_FILE") + p.Image
+		topings[i].Image = imagePath
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -56,8 +62,8 @@ func (h *handlerToping) GetToping(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// menampilkan gambar
-	toping.Image = path_file + toping.Image
+	// // menampilkan gambar
+	// toping.Image = path_file + toping.Image
 
 	w.WriteHeader(http.StatusOK)
 	response := dto.SuccessResult{Status: "Success", Data: toping}

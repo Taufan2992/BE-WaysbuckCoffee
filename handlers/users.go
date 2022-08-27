@@ -148,8 +148,8 @@ func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// menampilkan gambar
-	user.Image = path_file + user.Image
+	// // menampilkan gambar
+	// user.Image = path_file + user.Image
 
 	w.WriteHeader(http.StatusOK)
 	response := dto.SuccessResult{Status: "Success", Data: data}
