@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -13,6 +14,11 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
+
+	"context"
+
+	"github.com/cloudinary/cloudinary-go/v2"
+	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 )
 
 type handlerToping struct {
@@ -37,11 +43,6 @@ func (h *handlerToping) FindTopings(w http.ResponseWriter, r *http.Request) {
 	// for i, p := range topings {
 	// 	topings[i].Image = path_file + p.Image
 	// }
-
-	for i, p := range topings {
-		imagePath := os.Getenv("PATH_FILE") + p.Image
-		topings[i].Image = imagePath
-	}
 
 	w.WriteHeader(http.StatusOK)
 	response := dto.SuccessResult{Status: "Success", Data: topings}
@@ -73,14 +74,18 @@ func (h *handlerToping) GetToping(w http.ResponseWriter, r *http.Request) {
 func (h *handlerToping) CreateToping(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	dataContex := r.Context().Value("dataFile") // add this code
-	filename := dataContex.(string)             // add this code
+	// dataContex := r.Context().Value("dataFile") // add this code
+	// filename := dataContex.(string)             // add this code
+
+	// get image filepath
+	dataContex := r.Context().Value("dataFile")
+	filepath := dataContex.(string)
 
 	price, _ := strconv.Atoi(r.FormValue("price"))
 	request := productdto.ProductRequest{
 		Title: r.FormValue("title"),
 		Price: price,
-		Image: filename,
+		Image: filepath,
 	}
 
 	validation := validator.New()
@@ -92,10 +97,25 @@ func (h *handlerToping) CreateToping(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var ctx = context.Background()
+	var CLOUD_NAME = os.Getenv("CLOUD_NAME")
+	var API_KEY = os.Getenv("API_KEY")
+	var API_SECRET = os.Getenv("API_SECRET")
+
+	// Add your Cloudinary credentials ...
+	cld, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
+
+	// Upload file to Cloudinary ...
+	resp, err := cld.Upload.Upload(ctx, filepath, uploader.UploadParams{Folder: "waysbuck"})
+
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
 	toping := models.Toping{
 		Title: request.Title,
 		Price: request.Price,
-		Image: filename,
+		Image: resp.SecureURL, // Modify store file URL to database from resp.SecureURL ...
 	}
 
 	// err := mysql.DB.Create(&toping).Error
